@@ -53,6 +53,7 @@ public class SecurityConfig {
     private final JwtTokenUtils jwtTokenUtils;
     private final RefreshTokenRepo refreshTokenRepo;
     private final LogoutHandlerService logoutHandlerService;
+    
     @Order(1)
     @Bean
     public SecurityFilterChain signInSecurityFilterChain(HttpSecurity httpSecurity) throws Exception{
@@ -154,6 +155,22 @@ public class SecurityConfig {
                 // to display the h2Console in Iframe
                 .headers(headers -> headers.frameOptions(withDefaults()).disable())
                 .build();
+    }
+
+    @Order(7)
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(authorizeRequests ->
+                authorizeRequests
+                    .anyRequest().authenticated()
+            )
+            .oauth2Login(oauth2 -> 
+                oauth2
+                    .defaultSuccessUrl("/google/login", true)
+            );
+
+        return http.build();
     }
 
     @Bean

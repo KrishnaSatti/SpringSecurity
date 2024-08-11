@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 public class UserInfoManagerConfig implements UserDetailsService {
 
     private final UserInfoRepo userInfoRepo;
+    
     @Override
     public UserDetails loadUserByUsername(String emailId) throws UsernameNotFoundException {
         return userInfoRepo
