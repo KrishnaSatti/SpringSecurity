@@ -4,6 +4,7 @@ import satti.krishna.springsecurity.config.RSAKeyRecord;
 import satti.krishna.springsecurity.repo.RefreshTokenRepo;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,14 +25,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 
-/**
- * @author atquil
- */
 @RequiredArgsConstructor
 @Slf4j
 public class JwtRefreshTokenFilter extends OncePerRequestFilter {
 
-    private  final RSAKeyRecord rsaKeyRecord;
+    private final RSAKeyRecord rsaKeyRecord;
     private final JwtTokenUtils jwtTokenUtils;
     private final RefreshTokenRepo refreshTokenRepo;
 
@@ -42,52 +40,84 @@ public class JwtRefreshTokenFilter extends OncePerRequestFilter {
 
         try {
             log.info("[JwtRefreshTokenFilter:doFilterInternal] :: Started ");
+            log.info("[JwtRefreshTokenFilter:doFilterInternal] Filtering the Http Request: {}", request.getRequestURI());
 
-            log.info("[JwtRefreshTokenFilter:doFilterInternal]Filtering the Http Request:{}", request.getRequestURI());
+            // Extract refresh token from the cookie
+            String token = null;
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    log.debug("[JwtRefreshTokenFilter:doFilterInternal] Checking cookie: {}", cookie.getName());
+                    if ("refresh_token".equals(cookie.getName())) {
+                        token = cookie.getValue();
+                        log.info("[JwtRefreshTokenFilter:doFilterInternal] Refresh token found in cookies");
+                        break;
+                    }
+                }
+            }
 
-
-            final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-
-            JwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(rsaKeyRecord.rsaPublicKey()).build();
-
-            if (!authHeader.startsWith("Bearer ")) {
+            if (token == null) {
+                log.warn("[JwtRefreshTokenFilter:doFilterInternal] No refresh token found in cookies. Proceeding without setting authentication.");
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            final String token = authHeader.substring(7);
+            log.info("[JwtRefreshTokenFilter:doFilterInternal] Decoding refresh token");
+            JwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(rsaKeyRecord.rsaPublicKey()).build();
             final Jwt jwtRefreshToken = jwtDecoder.decode(token);
 
-
+            log.info("[JwtRefreshTokenFilter:doFilterInternal] Extracting username from token");
             final String userName = jwtTokenUtils.getUserName(jwtRefreshToken);
-
+            log.debug("[JwtRefreshTokenFilter:doFilterInternal] Username extracted: {}", userName);
 
             if (!userName.isEmpty() && SecurityContextHolder.getContext().getAuthentication() == null) {
-                //Check if refreshToken isPresent in database and is valid
+                log.info("[JwtRefreshTokenFilter:doFilterInternal] No existing authentication found. Validating refresh token in database");
+
+                // Check if refreshToken is present in the database and is valid
                 var isRefreshTokenValidInDatabase = refreshTokenRepo.findByRefreshToken(jwtRefreshToken.getTokenValue())
-                        .map(refreshTokenEntity -> !refreshTokenEntity.isRevoked())
+                        .map(refreshTokenEntity -> {
+                            log.debug("[JwtRefreshTokenFilter:doFilterInternal] Refresh token found in database. Revoked status: {}", refreshTokenEntity.isRevoked());
+                            return !refreshTokenEntity.isRevoked();
+                        })
                         .orElse(false);
 
-                UserDetails userDetails = jwtTokenUtils.userDetails(userName);
-                if (jwtTokenUtils.isTokenValid(jwtRefreshToken, userDetails) && isRefreshTokenValidInDatabase) {
-                    SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+                if (!isRefreshTokenValidInDatabase) {
+                    log.warn("[JwtRefreshTokenFilter:doFilterInternal] Refresh token is invalid or revoked");
+                } else {
+                    log.info("[JwtRefreshTokenFilter:doFilterInternal] Refresh token is valid. Proceeding to authenticate user: {}", userName);
 
-                    UsernamePasswordAuthenticationToken createdToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
+                    UserDetails userDetails = jwtTokenUtils.userDetails(userName);
+                    if (jwtTokenUtils.isTokenValid(jwtRefreshToken, userDetails)) {
+                        log.info("[JwtRefreshTokenFilter:doFilterInternal] JWT token is valid. Creating security context");
 
-                    createdToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    securityContext.setAuthentication(createdToken);
-                    SecurityContextHolder.setContext(securityContext);
+                        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+
+                        UsernamePasswordAuthenticationToken createdToken = new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
+
+                        createdToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        securityContext.setAuthentication(createdToken);
+                        SecurityContextHolder.setContext(securityContext);
+
+                        log.info("[JwtRefreshTokenFilter:doFilterInternal] Authentication successful for user: {}", userName);
+                    } else {
+                        log.warn("[JwtRefreshTokenFilter:doFilterInternal] JWT token validation failed for user: {}", userName);
+                    }
                 }
+            } else if (userName.isEmpty()) {
+                log.warn("[JwtRefreshTokenFilter:doFilterInternal] Username is empty in the JWT token");
+            } else {
+                log.info("[JwtRefreshTokenFilter:doFilterInternal] Security context already contains authentication. Skipping");
             }
+
             log.info("[JwtRefreshTokenFilter:doFilterInternal] Completed");
             filterChain.doFilter(request, response);
-        }catch (JwtValidationException jwtValidationException){
-            log.error("[JwtRefreshTokenFilter:doFilterInternal] Exception due to :{}",jwtValidationException.getMessage());
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,jwtValidationException.getMessage());
+        } catch (JwtValidationException jwtValidationException) {
+            log.error("[JwtRefreshTokenFilter:doFilterInternal] Exception during JWT validation: {}", jwtValidationException.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, jwtValidationException.getMessage());
         }
     }
 }

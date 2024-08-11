@@ -2,6 +2,8 @@ package satti.krishna.springsecurity.controller;
 
 import satti.krishna.springsecurity.dto.UserRegistrationDto;
 import satti.krishna.springsecurity.service.AuthService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,39 +22,63 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * @author atquil
- */
 @RestController
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController {
 
     private final AuthService authService;
-    @PostMapping("/sign-in")
-    public ResponseEntity<?> authenticateUser(Authentication authentication,HttpServletResponse response){
 
-        return ResponseEntity.ok(authService.getJwtTokensAfterAuthentication(authentication,response));
+    @PostMapping("/sign-in")
+    public ResponseEntity<?> authenticateUser(Authentication authentication, HttpServletResponse response) {
+        return ResponseEntity.ok(authService.getJwtTokensAfterAuthentication(authentication, response));
     }
 
-    @PreAuthorize("hasAuthority('SCOPE_REFRESH_TOKEN')")
-    @PostMapping ("/refresh-token")
-    public ResponseEntity<?> getAccessToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader){
-        return ResponseEntity.ok(authService.getAccessTokenUsingRefreshToken(authorizationHeader));
+    // @PreAuthorize("hasAuthority('SCOPE_REFRESH_TOKEN')")
+    @PostMapping("/refresh-token")
+    public ResponseEntity<?> getAccessToken(HttpServletRequest request) {
+        log.info("[AuthController:getAccessToken] Starting refresh token process");
+
+        String refreshToken = extractRefreshTokenFromCookie(request);
+        if (refreshToken == null) {
+            log.warn("[AuthController:getAccessToken] Refresh token is missing from cookies");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token is missing");
+        }
+
+        log.info("[AuthController:getAccessToken] Refresh token extracted successfully");
+        return ResponseEntity.ok(authService.getAccessTokenUsingRefreshToken(refreshToken));
     }
 
     @PostMapping("/sign-up")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto,
-                                          BindingResult bindingResult, HttpServletResponse httpServletResponse){
+                                          BindingResult bindingResult, HttpServletResponse httpServletResponse) {
 
-        log.info("[AuthController:registerUser]Signup Process Started for user:{}",userRegistrationDto.userName());
+        log.info("[AuthController:registerUser] Signup process started for user: {}", userRegistrationDto.userName());
         if (bindingResult.hasErrors()) {
             List<String> errorMessage = bindingResult.getAllErrors().stream()
                     .map(DefaultMessageSourceResolvable::getDefaultMessage)
                     .toList();
-            log.error("[AuthController:registerUser]Errors in user:{}",errorMessage);
+            log.error("[AuthController:registerUser] Errors in user registration: {}", errorMessage);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
         }
-        return ResponseEntity.ok(authService.registerUser(userRegistrationDto,httpServletResponse));
+        log.info("[AuthController:registerUser] Registering user: {}", userRegistrationDto.userName());
+        return ResponseEntity.ok(authService.registerUser(userRegistrationDto, httpServletResponse));
+    }
+
+    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+        log.info("[AuthController:extractRefreshTokenFromCookie] Extracting refresh token from cookies");
+
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("refresh_token".equals(cookie.getName())) {
+                    log.info("[AuthController:extractRefreshTokenFromCookie] Refresh token found in cookies");
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        log.warn("[AuthController:extractRefreshTokenFromCookie] Refresh token not found in cookies");
+        return null;
     }
 }
