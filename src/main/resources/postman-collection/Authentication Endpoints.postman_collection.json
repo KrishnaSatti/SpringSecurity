@@ -1,0 +1,160 @@
+{
+	"info": {
+		"_postman_id": "44b4a1dc-ac34-4214-9974-1a0336b2de0d",
+		"name": "Authentication Endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "9222392"
+	},
+	"item": [
+		{
+			"name": "1. welcome-message",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJhdHF1aWwiLCJzdWIiOiJhZG1pbkBhZG1pbi5jb20iLCJleHAiOjE3MjMzMTA0MzksImlhdCI6MTcyMzMxMDQzOCwic2NvcGUiOiJSRUFEIERFTEVURSBXUklURSJ9.cJg5R8HieW3iWwSkIQgSJ7XmQRNZVT-sn2YQVNgIVSAiLGyV4beioxB1dBSMDnbyKiGJquG0nMyvodCindZaPRIJ2odhdmIYvE8NBvPPWXiJljvVEvohYwt1lFwmPaMwPB70Rj8ZAYBvpRzHJuDNcY3jZyQTpdao63fOKyWiLrZ-yjJfv5cZBrLPlbxNTZ1-Q8yB1v6n_-d0_YSFNLIvniOgk8UPCEIRDsJBPCJdy_GYpe5obbomsc5xW2h7u_nUtHN3obonGx0pQ94qkTkh7AQWSbs1xdngNCg6qgh6JCuW3F6TdM9uWGJ1nJy07YZJ9gwqtZyjDwmwApgCHslC2w"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:8088/api/welcome-message"
+			},
+			"response": []
+		},
+		{
+			"name": "2. manager-message",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJhdHF1aWwiLCJzdWIiOiJzYXR0aS5rcmlzaG5hLnJAZ21haWwuY29tIiwiZXhwIjoxNzIzMzA4MDgxLCJpYXQiOjE3MjMzMDcxODEsInNjb3BlIjoiUkVBRCBERUxFVEUgV1JJVEUifQ.Hz6jw5-oc408YEyMRH_-qH_SLBPQSEiY3ynA_y1dJBEfL39oVTMxznnkvFbH1LOnrzn6hXtsh5xbdIWhvKVkDXpmBVQn42y3llCoso1CXKAFjisoN0z_HxZZ4TbEFqfr0P8I0-8CQb1bhnRPG44ojfyNwFaCAt8g3l3TrHGl3A2TU4fbw3gSGwzWYX9HlHQVg_KyMpiAOawDjzCFk9R2VpOuCtXGchnnUlG5RGPr9cti8VED_qXMwm4hZVGXT2ovaK1_VH2UxtsaSyo_HJmtaJrmv5Q825wAVrbecz7XlFuu4EjxsIrV04rOf1Rs_3oIsAkFDwOA7ACz3ogCumZrUg"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:8088/api/manager-message"
+			},
+			"response": []
+		},
+		{
+			"name": "3. admin-message",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJhdHF1aWwiLCJzdWIiOiJhZG1pbkBhZG1pbi5jb20iLCJleHAiOjE3MjMzMTAwNDQsImlhdCI6MTcyMzMxMDAyOSwic2NvcGUiOiJSRUFEIERFTEVURSBXUklURSJ9.T5zcTDvhUsMHI1pubP1vRBl78Z7g4A2Auxd8Ex4Mc2vIPkgMsjundYo34mOP5yD8AcBJyFsdBVhUIMzkuF8pE1X3QIx0KPNrdhFVPS966WZ2bOZ0MQpV1cplbjDyKTB0RKUlOelHWEXb9uEgd1hiR-Cn2oruN0grSo6-CEp_9qDGfM2xvO6uMzPSItzL0j81prJDIpQcB3qw40py8kD6ZOfKxWkR4FfGUUWsRKka4j80kLygqGOTZhJhSDwNX92Bwc9r6HebC5rtzRhL9RsYJEq71wo7Dmrh9LYQgoalb0QGDdHcrftz-o8cT0fgwYNaMr9S0irL_np-EFeFILUmuQ"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8088/api/admin-message?message=something",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8088",
+					"path": [
+						"api",
+						"admin-message"
+					],
+					"query": [
+						{
+							"key": "message",
+							"value": "something"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. sign-in",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": {
+						"password": "password123",
+						"username": "satti.krishna.r@gmail.com"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\":\"\",\r\n    \"password\":\"\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8088/sign-in"
+			},
+			"response": []
+		},
+		{
+			"name": "5. refresh-token",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJhdHF1aWwiLCJzdWIiOiJhZG1pbkBhZG1pbi5jb20iLCJleHAiOjE3MDc3NTU2NTAsImlhdCI6MTcwNjQ1OTY1MCwic2NvcGUiOiJSRUZSRVNIX1RPS0VOIn0.nfuD5hfZBKDiDtqT-aDzzrW5nP2HlT1xvNqhw5V35-R6FCi1XphLieGlO8YDwUPNxEkhu5GY191dNP-PY9Y0bTC7ScK4euBbXx5UbXCQfx-r48PCOxirskh1VjeOIRDF8thYYBHzfrb9bjy2Z9GD9GE-JMt8RckSc98HXKmh1aNpUMBpnTVZI7Jy535ZawNChlyXyb-YQleAsOPAfYYgCUEl5mJ1TKOkyAVrIqfDPG5jngsYXhv-CUarD12O43e3OjK26XZoWTA5-Lk8yU0krrjPzdvT1_XndH8Eig5pWv-UC7ECsAUdgAC8ijLrXp69Cjpc32N6Th-svxky31u8aA"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"url": "http://localhost:8088/refresh-token"
+			},
+			"response": []
+		},
+		{
+			"name": "6. logout",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJhdHF1aWwiLCJzdWIiOiJhZG1pbkBhZG1pbi5jb20iLCJleHAiOjE3MDc3NTU2NTAsImlhdCI6MTcwNjQ1OTY1MCwic2NvcGUiOiJSRUZSRVNIX1RPS0VOIn0.nfuD5hfZBKDiDtqT-aDzzrW5nP2HlT1xvNqhw5V35-R6FCi1XphLieGlO8YDwUPNxEkhu5GY191dNP-PY9Y0bTC7ScK4euBbXx5UbXCQfx-r48PCOxirskh1VjeOIRDF8thYYBHzfrb9bjy2Z9GD9GE-JMt8RckSc98HXKmh1aNpUMBpnTVZI7Jy535ZawNChlyXyb-YQleAsOPAfYYgCUEl5mJ1TKOkyAVrIqfDPG5jngsYXhv-CUarD12O43e3OjK26XZoWTA5-Lk8yU0krrjPzdvT1_XndH8Eig5pWv-UC7ECsAUdgAC8ijLrXp69Cjpc32N6Th-svxky31u8aA"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"url": "http://localhost:8088/logout"
+			},
+			"response": []
+		},
+		{
+			"name": "7. sign-up",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJhdHF1aWwiLCJzdWIiOiJhZG1pbkBhZG1pbi5jb20iLCJleHAiOjE3MDc3NTU2NTAsImlhdCI6MTcwNjQ1OTY1MCwic2NvcGUiOiJSRUZSRVNIX1RPS0VOIn0.nfuD5hfZBKDiDtqT-aDzzrW5nP2HlT1xvNqhw5V35-R6FCi1XphLieGlO8YDwUPNxEkhu5GY191dNP-PY9Y0bTC7ScK4euBbXx5UbXCQfx-r48PCOxirskh1VjeOIRDF8thYYBHzfrb9bjy2Z9GD9GE-JMt8RckSc98HXKmh1aNpUMBpnTVZI7Jy535ZawNChlyXyb-YQleAsOPAfYYgCUEl5mJ1TKOkyAVrIqfDPG5jngsYXhv-CUarD12O43e3OjK26XZoWTA5-Lk8yU0krrjPzdvT1_XndH8Eig5pWv-UC7ECsAUdgAC8ijLrXp69Cjpc32N6Th-svxky31u8aA"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"userName\": \"krishnasatti\",\r\n  \"userMobileNo\": \"8486675407\",\r\n  \"userEmail\": \"satti.krishna.r@gmail.com\",\r\n  \"userPassword\": \"password123\",\r\n  \"userRole\": \"ROLE_ADMIN\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8088/sign-up"
+			},
+			"response": []
+		}
+	]
+}
