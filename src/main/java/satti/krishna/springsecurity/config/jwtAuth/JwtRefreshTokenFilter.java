@@ -4,11 +4,11 @@ import satti.krishna.springsecurity.config.RSAKeyRecord;
 import satti.krishna.springsecurity.repo.RefreshTokenRepo;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
@@ -23,8 +23,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Optional;
 
 /**
  * @author atquil
@@ -33,7 +31,7 @@ import java.util.Optional;
 @Slf4j
 public class JwtRefreshTokenFilter extends OncePerRequestFilter {
 
-    private final RSAKeyRecord rsaKeyRecord;
+    private  final RSAKeyRecord rsaKeyRecord;
     private final JwtTokenUtils jwtTokenUtils;
     private final RefreshTokenRepo refreshTokenRepo;
 
@@ -47,20 +45,25 @@ public class JwtRefreshTokenFilter extends OncePerRequestFilter {
 
             log.info("[JwtRefreshTokenFilter:doFilterInternal]Filtering the Http Request:{}", request.getRequestURI());
 
-            String refreshToken = extractRefreshTokenFromCookies(request);
 
-            if (refreshToken == null) {
+            final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+            JwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(rsaKeyRecord.rsaPublicKey()).build();
+
+            if (!authHeader.startsWith("Bearer ")) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            JwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(rsaKeyRecord.rsaPublicKey()).build();
-            final Jwt jwtRefreshToken = jwtDecoder.decode(refreshToken);
+            final String token = authHeader.substring(7);
+            final Jwt jwtRefreshToken = jwtDecoder.decode(token);
+
 
             final String userName = jwtTokenUtils.getUserName(jwtRefreshToken);
 
+
             if (!userName.isEmpty() && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Check if refreshToken is valid in the database and is not revoked
+                //Check if refreshToken isPresent in database and is valid
                 var isRefreshTokenValidInDatabase = refreshTokenRepo.findByRefreshToken(jwtRefreshToken.getTokenValue())
                         .map(refreshTokenEntity -> !refreshTokenEntity.isRevoked())
                         .orElse(false);
@@ -82,20 +85,9 @@ public class JwtRefreshTokenFilter extends OncePerRequestFilter {
             }
             log.info("[JwtRefreshTokenFilter:doFilterInternal] Completed");
             filterChain.doFilter(request, response);
-        } catch (JwtValidationException jwtValidationException) {
-            log.error("[JwtRefreshTokenFilter:doFilterInternal] Exception due to :{}", jwtValidationException.getMessage());
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, jwtValidationException.getMessage());
+        }catch (JwtValidationException jwtValidationException){
+            log.error("[JwtRefreshTokenFilter:doFilterInternal] Exception due to :{}",jwtValidationException.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,jwtValidationException.getMessage());
         }
-    }
-
-    private String extractRefreshTokenFromCookies(HttpServletRequest request) {
-        if (request.getCookies() != null) {
-            Optional<Cookie> refreshTokenCookie = Arrays.stream(request.getCookies())
-                    .filter(cookie -> "refresh_token".equals(cookie.getName()))
-                    .findFirst();
-
-            return refreshTokenCookie.map(Cookie::getValue).orElse(null);
-        }
-        return null;
     }
 }
